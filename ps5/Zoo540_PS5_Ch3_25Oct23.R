@@ -8,10 +8,29 @@
 
 # 2. Construct the right panel of figure 3.8 giving power curves for the detection of phylogenetic signal in simulated data using an OU transform. You can modify the code I provided for the left panel which simulates data using Pagel's λ transform which is below labeled "Fig. 3.8 left panel".
 
-# 3. The parametric bootstrap of H0 for phylogenetic signal (subsection 3.5.3) uses the log likelihood ratio (LLR) as the test statistic. It is also possible to use the phylogenetic signal parameter (λ or α) as the test statistic. This would involve the following: (i) Fit the model to the data and calculate the value of the phylogenetic signal parameter (λ or α). (ii) Refit the model with no phylogenetic signal and use the resulting parameter values to simulate a large number of datasets. (iii) Refit the model including the phylogenetic signal parameter (λ or α) for each dataset and collect these values. (iv) The resulting distribution of λ or α estimated from the simulated datasets approximates the distribution of the estimator of λ or α, allowing P-values to be calculated. Perform this bootstrap and compare the results to the bootstrap of H0 using the LLR.
+# 3. The parametric bootstrap of H0 for phylogenetic signal (subsection 3.5.3) uses the log likelihood 
+#ratio (LLR) as the test statistic. It is also possible to use the phylogenetic signal parameter 
+#(λ or α) as the test statistic. This would involve the following: (i) Fit the model to the data and
+#calculate the value of the phylogenetic signal parameter (λ or α). (ii) Refit the model with no 
+#phylogenetic signal and use the resulting parameter values to simulate a large number of datasets. 
+#(iii) Refit the model including the phylogenetic signal parameter (λ or α) for each dataset and 
+#collect these values. (iv) The resulting distribution of λ or α estimated from the simulated datasets 
+#approximates the distribution of the estimator of λ or α, allowing P-values to be calculated. 
+#Perform this bootstrap and compare the results to the bootstrap of H0 using the LLR.
 
-# 4. When investigating mixed models (chapters 1 and 2), we focused on testing hypotheses concerning the fixed effects (the slope). Knowing what you know about testing for phylogenetic signal (sections 3.4 and 3.5), what methods could you use to test hypotheses regarding the random effects in a mixed model? You don't need to do this in R: I'm only asking for ideas. But you will impress me if you can take the models from chapter 1 and perform a test of a null hypothesis concerning a random effect. 
+# 4. When investigating mixed models (chapters 1 and 2), we focused on testing hypotheses concerning 
+#the fixed effects (the slope). Knowing what you know about testing for phylogenetic signal
+#(sections 3.4 and 3.5), what methods could you use to test hypotheses regarding the random effects in
+#a mixed model? You don't need to do this in R: I'm only asking for ideas. But you will impress me 
+#if you can take the models from chapter 1 and perform a test of a null hypothesis concerning a random
+#effect. 
+#~~~~~~~~~~~~~~~~~~~~
+#here are our ideas: 
+1. use REML 
+2. you will definitely have to do something with the variances of the random effects 
 
+
+#~~~~~~~~~~~~~~~~~~~~
 #################################################################
 # load libraries
 #################################################################
@@ -35,7 +54,7 @@ library(logistf)
 n <- 30
 lam<-0
 alpha<-50
-nboot <- 2000
+nboot <- 200
 
 phy <- compute.brlen(rtree(n=n), method = "Grafen", power = 1)
 phy.ou <- transf.branch.lengths(phy=phy, model="OUfixedRoot", parameters=list(alpha=alpha))$tree
@@ -64,15 +83,15 @@ lines(.1*(1:100), nboot*dchisq(.1*(1:100), df=1), col="blue")
 # Compute the rejection rates for the 5 methods.
 # Note that the same starter phylogeny is used for the simulations, since the critical values of lam and alpha used in the bootstraps around H0 could depend on the topology.
 alpha.list <- c(1,2,5,10,20,50)
-nsims <- 2000
+nsims <- 200
 
 reject <- data.frame(alpha=rep(NA, nsims*length(alpha.list)), lam.LRT=NA, OU.LRT=NA, lam.boot0=NA, OU.boot0=NA, K.perm=NA)
 counter <- 0
 for(alpha in alpha.list){
-  phy.OU <- transf.branch.lengths(phy=phy, model="OUfixedRoot", parameters=list(alpha=alpha))$tree
+  phy.ou <- transf.branch.lengths(phy=phy, model="OUfixedRoot", parameters=list(alpha=alpha))$tree
   for(i in 1:nsims){
     counter <- counter + 1
-    reject$lam[counter] <- lam      
+    reject$alpha[counter] <- alpha  
     Y.sim <- rTraitCont(phy.ou, model = "BM", sigma = 1)
     
     # LRTs
@@ -89,7 +108,7 @@ for(alpha in alpha.list){
     reject$OU.boot0[counter] <- (LLR.OU > LLR.OU.crit)
     
     # Permutation test with Blomberg's K
-    z.phylosig.K <- phylosig(Y.sim, tree=phy, method="K", test=TRUE, nsim=2000)
+    z.phylosig.K <- phylosig(Y.sim, tree=phy, method="K", test=TRUE, nsim=200)
     reject$K.perm[counter] <- (z.phylosig.K$P < 0.05)
   }
 }
@@ -104,9 +123,9 @@ names(power)[1] <- "alpha"
 # Fig. 3.8, right panel
 
 
-par(mfrow=c(2,1))
-plot(OU.LRT ~ alpha, data=power, typ="l", xlim=c(0,50), ylim=c(0, 1), xlab=expression(paste("Phylogenetic signal (", alpha, ")")), ylab="Fraction rejected")
-lines(lam.LRT ~ alpha, data=power, col=2)
+par(mfrow=c(1,2))
+plot(lam.LRT ~ alpha, data=power, typ="l", xlim=c(0,50), ylim=c(0, 1), xlab=expression(paste("Phylogenetic signal (", alpha, ")")), ylab="Fraction rejected")
+lines(OU.LRT ~ alpha, data=power, col=2)
 lines(lam.boot0 ~ alpha, data=power, col=3)
 lines(OU.boot0 ~ alpha, data=power, col=4)
 lines(K.perm ~ alpha, data=power, col=5)
@@ -115,7 +134,7 @@ lines(K.perm ~ alpha, data=power, col=5)
 lines(c(0,10), c(.05,.05), lty=2)
 legend(.0,1,c("lam.LRT","OU.LRT", "lam.boot(H0)", "OU.boot(H0)", "K.perm"), col=1:5, lty=1)
 
---
+#~~~~~~~~~~~~~~~~~~~~~~
 
 #################################################################
 # 3.3 Phylogenetic correlation
