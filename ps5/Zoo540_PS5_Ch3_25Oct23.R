@@ -26,10 +26,10 @@
 #effect. 
 #~~~~~~~~~~~~~~~~~~~~
 #here are our ideas: 
-1. use REML 
-2. you will definitely have to do something with the variances of the random effects 
-
-
+#1. use REML 
+#2. you will definitely have to do something with the variances of the random effects 
+#3. you could use the lme4a package, and use the lme to test for random effects 
+#4. something with a likelihood ratio test :) 
 #~~~~~~~~~~~~~~~~~~~~
 #################################################################
 # load libraries
